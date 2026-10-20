@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: orders
+    description: Order notification operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /orders:
+    post:
+      operationId: sendOrderNotification
+      tags: [orders]
+      summary: Send an order notification by email
+      description: Sends a customer order to the configured FlowOS inbox.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderNotificationInput"
+      responses:
+        "200":
+          description: Order notification sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderNotificationResult"
+        "400":
+          description: Invalid order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: Email delivery failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    OrderNotificationInput:
+      type: object
+      additionalProperties: false
+      properties:
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 100
+        prenom:
+          type: string
+          minLength: 1
+          maxLength: 100
+        telephone:
+          type: string
+          minLength: 6
+          maxLength: 32
+          pattern: "^[+0-9(). -]+$"
+        wilaya_commune:
+          type: string
+          minLength: 1
+          maxLength: 120
+        adresse_livraison:
+          type: string
+          minLength: 1
+          maxLength: 300
+        quantite:
+          type: integer
+          minimum: 1
+          maximum: 999
+        longueur_cable_m:
+          type: integer
+          enum: [5, 10, 15, 20]
+          default: 5
+          description: Longueur du câble réseau UTP Cat6 en mètres ; 5 m par défaut.
+      required:
+        - nom
+        - prenom
+        - telephone
+        - wilaya_commune
+        - adresse_livraison
+        - quantite
+    OrderNotificationResult:
+      type: object
+      properties:
+        sent:
+          type: boolean
+          const: true
+      required:
+        - sent
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
